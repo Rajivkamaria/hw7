@@ -48,7 +48,7 @@ exports.handler = async function(event) {
 
   // get the first document from the query
   let course = courseQuery.docs[0]
-
+  
   // get the id from the document
   let courseId = course.id
 
@@ -58,20 +58,24 @@ exports.handler = async function(event) {
   // create an object with the course data to hold the return value from our lambda
   let returnValue = {
     courseNumber: courseData.courseNumber,
-    name: courseData.name
+    name: courseData.name,
+    totalReviews: 0,
+    averageCourseRating:0
   }
 
   // set a new Array as part of the return value
   returnValue.sections = []
-
+  
   // ask Firebase for the sections corresponding to the Document ID of the course, wait for the response
   let sectionsQuery = await db.collection('sections').where(`courseId`, `==`, courseId).get()
 
   // get the documents from the query
   let sections = sectionsQuery.docs
+  
 
   // loop through the documents
   for (let i=0; i < sections.length; i++) {
+
     // get the document ID of the section
     let sectionId = sections[i].id
 
@@ -87,18 +91,51 @@ exports.handler = async function(event) {
     // get the data from the returned document
     let lecturer = lecturerQuery.data()
 
-    // add the lecturer's name to the section Object
+    // add the lecturer's name and courseID to the section Object
     sectionObject.lecturerName = lecturer.name
+    sectionObject.courseId=sectionData.courseId
 
     // add the section Object to the return value
     returnValue.sections.push(sectionObject)
 
     // 🔥 your code for the reviews/ratings goes here
-  }
-
-  // return the standard response
+    // The beginning
+    // Array to hold review info.
+    sectionObject.rev =[]
+    // Pul reviews corresponding to ID of section from firebase
+    let revQue = await db.collection('reviews').where(`sectionId`, `==`, sectionId).get()
+    // get docs from query
+    let rev = revQue.docs
+    // select through reviews
+    for (let revInd=0; revInd < rev.length; revInd++) {
+    // get data from reviews
+    let revData = rev[revInd].data()
+    // Create object under section object
+    let revObj = {
+      body: revData.body,
+      rating: revData.rating,
+      sectionId: revData.sectionId}
+    // Push review object into section object/array
+    sectionObject.rev.push(revObj)
+    // Increase review count 1
+    returnValue.totalReviews=returnValue.totalReviews+1    
+    // Count  number reviews w/length function
+    sectionObject.sectRevCnt=sectionObject.rev.length}
+    // Loop through & add up all ratings and then /length = average
+     var sum =0;
+     for(var z=0 ; z<rev.length ; z++){
+        sum+=sectionObject.rev[z].rating;
+      }
+    sectionObject.avgSectRating=sum/sectionObject.rev.length}
+    // Select through & multiply section ratings X number sections 
+    // After weighted average / by number reviews
+    var sumA =0;
+    for(var zA=0 ; zA<returnValue.sections.length ; zA++)
+    {sumA+=returnValue.sections[zA].sectRevCnt*returnValue.sections[zA].avgSectRating;}
+    returnValue.averageCourseRating = sumA/returnValue.totalReviews
+  // Standard response w/code + body (stringed)
   return {
     statusCode: 200,
-    body: JSON.stringify(returnValue)
-  }
+    body: JSON.stringify(returnValue)}
 }
+// The end :)
