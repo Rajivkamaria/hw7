@@ -123,15 +123,14 @@ exports.handler = async function(event) {
     sectionObject.sectRevCnt=sectionObject.rev.length}
     // Loop through & add up all ratings and then /length = average
      var sum =0;
-     for(var z=0 ; z<rev.length ; z++){
-        sum+=sectionObject.rev[z].rating;
-      }
+     for(var Z=0 ; Z<rev.length ; Z++){
+        sum+=sectionObject.rev[z].rating;}
     sectionObject.avgSectRating=sum/sectionObject.rev.length}
     // Select through & multiply section ratings X number sections 
     // After weighted average / by number reviews
     var sumA =0;
-    for(var zA=0 ; zA<returnValue.sections.length ; zA++)
-    {sumA+=returnValue.sections[zA].sectRevCnt*returnValue.sections[zA].avgSectRating;}
+    for(var ZA=0 ; ZA<returnValue.sections.length ; ZA++)
+    {sumA+=returnValue.sections[ZA].sectRevCnt*returnValue.sections[ZA].avgSectRating;}
     returnValue.averageCourseRating = sumA/returnValue.totalReviews
   // Standard response w/code + body (stringed)
   return {
